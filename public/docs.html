@@ -66,7 +66,7 @@
           </div>
           <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">WhatsApp OTP API</h1>
         </div>
-        <p class="mt-2 text-slate-400 text-sm sm:text-base">Ultra-fast, Anti-Spam Protected Microservice API Documentation</p>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base">Ultra-fast, Firebase Integrated, Anti-Spam Protected Microservice API</p>
       </div>
 
       <!-- Live Server Status Indicator -->
@@ -83,7 +83,21 @@
     <main class="mt-10 space-y-8">
 
       <!-- QUICK STATS / FEATURES -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="bg-dark-card/60 backdrop-blur border border-dark-border p-4 rounded-xl flex items-center gap-4">
+          <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center"><i class="fa-solid fa-fire"></i></div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Database</div>
+            <div class="text-sm font-semibold text-white">Firebase Realtime</div>
+          </div>
+        </div>
+        <div class="bg-dark-card/60 backdrop-blur border border-dark-border p-4 rounded-xl flex items-center gap-4">
+          <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center"><i class="fa-solid fa-clock"></i></div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium">OTP Expiry</div>
+            <div class="text-sm font-semibold text-white">5 Minutes Limit</div>
+          </div>
+        </div>
         <div class="bg-dark-card/60 backdrop-blur border border-dark-border p-4 rounded-xl flex items-center gap-4">
           <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-bolt"></i></div>
           <div>
@@ -96,13 +110,6 @@
           <div>
             <div class="text-xs text-slate-400 font-medium">Protection</div>
             <div class="text-sm font-semibold text-white">IP Anti-Spam Limit</div>
-          </div>
-        </div>
-        <div class="bg-dark-card/60 backdrop-blur border border-dark-border p-4 rounded-xl flex items-center gap-4">
-          <div class="w-10 h-10 rounded-lg bg-brand-500/10 text-brand-500 flex items-center justify-center"><i class="fa-solid fa-key"></i></div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">OTP Digits</div>
-            <div class="text-sm font-semibold text-white">Dynamic (4, 6, N)</div>
           </div>
         </div>
       </div>
@@ -142,7 +149,7 @@
           <span class="text-xs text-slate-500 font-mono">POST</span>
         </div>
 
-        <p class="text-slate-400 text-sm mb-6">Target Phone Number-e auto-generated OTP send korar main endpoint.</p>
+        <p class="text-slate-400 text-sm mb-6">Target Mobile Number-e OTP send kore Firebase-e 5 min-er temp data store korar endpoint.</p>
 
         <!-- Method Badge + URL -->
         <div class="flex items-center gap-3 bg-dark-code border border-dark-border p-3 rounded-xl font-mono text-xs sm:text-sm mb-6">
@@ -167,10 +174,16 @@
             </thead>
             <tbody class="divide-y divide-dark-border text-slate-300">
               <tr>
-                <td class="p-3.5 font-mono text-brand-500 font-semibold">phone</td>
+                <td class="p-3.5 font-mono text-brand-500 font-semibold">number / phone</td>
                 <td class="p-3.5 font-mono text-slate-400">String / Number</td>
                 <td class="p-3.5"><span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold">REQUIRED</span></td>
-                <td class="p-3.5">Target WhatsApp Mobile Number (e.g. "9876543210")</td>
+                <td class="p-3.5">Target WhatsApp Mobile Number (e.g. 16627272727)</td>
+              </tr>
+              <tr>
+                <td class="p-3.5 font-mono text-brand-500 font-semibold">req_verify</td>
+                <td class="p-3.5 font-mono text-slate-400">Boolean</td>
+                <td class="p-3.5"><span class="bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">OPTIONAL</span></td>
+                <td class="p-3.5"><code class="text-amber-400 font-mono">true</code> dile response-e OTP ashbe na. Standard secure mode.</td>
               </tr>
               <tr>
                 <td class="p-3.5 font-mono text-brand-500 font-semibold">digit</td>
@@ -182,13 +195,13 @@
                 <td class="p-3.5 font-mono text-brand-500 font-semibold">message</td>
                 <td class="p-3.5 font-mono text-slate-400">String</td>
                 <td class="p-3.5"><span class="bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">OPTIONAL</span></td>
-                <td class="p-3.5">Custom Text Before OTP</td>
+                <td class="p-3.5">Custom Message Text Prefix</td>
               </tr>
               <tr>
                 <td class="p-3.5 font-mono text-brand-500 font-semibold">secret</td>
                 <td class="p-3.5 font-mono text-slate-400">String</td>
                 <td class="p-3.5"><span class="bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">OPTIONAL</span></td>
-                <td class="p-3.5">API Authorization Secret Key</td>
+                <td class="p-3.5">API Secret Key Authentication</td>
               </tr>
             </tbody>
           </table>
@@ -206,35 +219,127 @@
               </button>
             </div>
             <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto"><code id="payload">{
-  "phone": "9876543210",
-  "digit": 4,
-  "message": "Your verification code is"
+  "req_verify": true,
+  "number": 16627272727,
+  "digit": 4
 }</code></pre>
           </div>
 
-          <!-- Success Response -->
+          <!-- Success Response (req_verify: true) -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Success Response (200)</span>
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Response (req_verify: true)</span>
             </div>
             <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto"><code>{
-  "ok": true,
-  "otp": "4819"
+  "ok": true
 }</code></pre>
           </div>
 
         </div>
 
-        <!-- Spam Response -->
+        <!-- Fallback Response (req_verify: false / empty) -->
         <div class="mt-4">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-amber-500/80 uppercase tracking-wider flex items-center gap-1">
-              <i class="fa-solid fa-triangle-exclamation"></i> Rate Limit Response (429)
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Response (req_verify: false or omitted)
             </span>
           </div>
-          <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-amber-400/90 overflow-x-auto"><code>{
-  "ok": false,
-  "message": "Too many request attempts. Please wait 1 minute before trying again."
+          <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto"><code>{
+  "ok": true,
+  "otp": "1234"
+}</code></pre>
+        </div>
+
+      </section>
+
+      <!-- ENDPOINT 3: VERIFY OTP -->
+      <section class="bg-dark-card border border-dark-border rounded-2xl p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-purple-400"></i> Verify OTP
+          </h2>
+          <span class="text-xs text-slate-500 font-mono">POST</span>
+        </div>
+
+        <p class="text-slate-400 text-sm mb-6">User input kora OTP dynamic vabe Firebase Database-er match & 5-minute expiry check korar endpoint.</p>
+
+        <!-- Method Badge + URL -->
+        <div class="flex items-center gap-3 bg-dark-code border border-dark-border p-3 rounded-xl font-mono text-xs sm:text-sm mb-6">
+          <span class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2.5 py-1 rounded-md font-bold uppercase">POST</span>
+          <span class="text-slate-300">/verify-otp</span>
+        </div>
+
+        <!-- Request Body Parameters Table -->
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-slate-400"></i> Request Body Parameters
+        </h3>
+        
+        <div class="overflow-x-auto border border-dark-border rounded-xl mb-6">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-dark-code/50 border-b border-dark-border text-slate-400 font-medium">
+                <th class="p-3.5">Parameter</th>
+                <th class="p-3.5">Type</th>
+                <th class="p-3.5">Required</th>
+                <th class="p-3.5">Description</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-dark-border text-slate-300">
+              <tr>
+                <td class="p-3.5 font-mono text-brand-500 font-semibold">number / phone</td>
+                <td class="p-3.5 font-mono text-slate-400">String / Number</td>
+                <td class="p-3.5"><span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold">REQUIRED</span></td>
+                <td class="p-3.5">Target WhatsApp Mobile Number</td>
+              </tr>
+              <tr>
+                <td class="p-3.5 font-mono text-brand-500 font-semibold">otp</td>
+                <td class="p-3.5 font-mono text-slate-400">String</td>
+                <td class="p-3.5"><span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold">REQUIRED</span></td>
+                <td class="p-3.5">User Input OTP Code (e.g. "1234")</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- CODE EXAMPLES / RESPONSES -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          
+          <!-- Request Payload -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">JSON Payload</span>
+              <button onclick="copyCode('verify_payload')" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+            <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto"><code id="verify_payload">{
+  "number": 1234567890,
+  "otp": "1234"
+}</code></pre>
+          </div>
+
+          <!-- Verified Success Response -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Match Success Response (200)</span>
+            </div>
+            <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto"><code>{
+  "verified": true
+}</code></pre>
+          </div>
+
+        </div>
+
+        <!-- Mismatch or Expired Response -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-red-400/80 uppercase tracking-wider flex items-center gap-1">
+              <i class="fa-solid fa-circle-xmark"></i> Mismatch or Expired Response (400)
+            </span>
+          </div>
+          <pre class="bg-dark-code border border-dark-border p-4 rounded-xl font-mono text-xs text-red-400/90 overflow-x-auto"><code>{
+  "verified": false,
+  "message": "OTP not found or expired"
 }</code></pre>
         </div>
 
@@ -244,7 +349,7 @@
 
     <!-- FOOTER -->
     <footer class="mt-12 text-center text-xs text-slate-500 border-t border-dark-border pt-6">
-      <p>Powered by Suvo, Express & Baileys microservice.</p>
+      <p>Powered by Suvo, Express, Firebase & Baileys microservice.</p>
     </footer>
 
   </div>
