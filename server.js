@@ -8,6 +8,7 @@ const {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios'); // Firebase REST API request handles er jonno
 require('dotenv').config();
 
 const app = express();
@@ -16,16 +17,36 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 4000;
 const API_SECRET = process.env.WA_API_SECRET || 'my_wa_secret_key_123';
+const FBDB_URL = process.env.FBDB_URL ? process.env.FBDB_URL.replace(/\/$/, '') : null;
 
 let sock;
 let isConnected = false;
 
 // ----------------------------------------------------
+// FIREBASE REST API HELPERS (PUT, GET, DELETE)
+// ----------------------------------------------------
+async function dbPut(pathData, data) {
+  if (!FBDB_URL) throw new Error('FBDB_URL process.env missing');
+  return axios.put(`${FBDB_URL}/${pathData}.json`, data);
+}
+
+async function dbGet(pathData) {
+  if (!FBDB_URL) throw new Error('FBDB_URL process.env missing');
+  const res = await axios.get(`${FBDB_URL}/${pathData}.json`);
+  return res.data;
+}
+
+async function dbDelete(pathData) {
+  if (!FBDB_URL) throw new Error('FBDB_URL process.env missing');
+  return axios.delete(`${FBDB_URL}/${pathData}.json`);
+}
+
+// ----------------------------------------------------
 // SPAM DETECTION / RATE LIMITING SYSTEM (PER IP)
 // ----------------------------------------------------
 const ipRequestTracker = new Map();
-const REQUEST_LIMIT = 3;         // Continuous request limit per window
-const TIME_WINDOW_MS = 60 * 1000; // 1 Minute window
+const REQUEST_LIMIT = 3;         
+const TIME_WINDOW_MS = 60 * 1000; 
 
 function isSpamming(ip) {
   const now = Date.now();
@@ -34,11 +55,10 @@ function isSpamming(ip) {
     return false;
   }
 
-  // Filter timestamps within current 1-minute window
   const timestamps = ipRequestTracker.get(ip).filter(time => now - time < TIME_WINDOW_MS);
   
   if (timestamps.length >= REQUEST_LIMIT) {
-    return true; // Spam detected
+    return true; 
   }
 
   timestamps.push(now);
@@ -46,7 +66,6 @@ function isSpamming(ip) {
   return false;
 }
 
-// Clean stale IP logs every 10 minutes to prevent memory leak
 setInterval(() => {
   const now = Date.now();
   for (const [ip, timestamps] of ipRequestTracker.entries()) {
@@ -59,7 +78,6 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
-// Helper Delay Function
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ----------------------------------------------------
@@ -149,10 +167,9 @@ app.get('/health', (req, res) => {
 });
 
 // ----------------------------------------------------
-// UPDATED OTP SENDER API WITH ANTI-SPAM & 3-RETRY LOGIC
+// OTP SENDER API WITH FIREBASE STORE & 5-MIN EXPIRY
 // ----------------------------------------------------
 app.post('/send-otp', async (req, res) => {
-  // 1. IP Anti-Spam Check
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   if (isSpamming(clientIp)) {
     console.warn(`⚠️ Spam attempt blocked from IP: ${clientIp}`);
@@ -162,9 +179,10 @@ app.post('/send-otp', async (req, res) => {
     });
   }
 
-  const { phone, digit, message, secret } = req.body;
+  // Support both 'number' and 'phone' keys
+  const { number, phone, digit, message, secret, req_verify } = req.body;
+  const targetNumber = number || phone;
 
-  // 2. Secret validation
   if (secret && secret !== API_SECRET) {
     return res.status(401).json({ ok: false, message: 'Unauthorized API Secret Key' });
   }
@@ -173,21 +191,21 @@ app.post('/send-otp', async (req, res) => {
     return res.status(503).json({ ok: false, message: 'WhatsApp Service is not connected yet.' });
   }
 
-  if (!phone) {
-    return res.status(400).json({ ok: false, message: 'Phone number is required' });
+  if (!targetNumber) {
+    return res.status(400).json({ ok: false, message: 'Phone/Number is required' });
   }
 
   const generatedOtp = generateOTP(digit);
   const baseMessage = message || 'Your OTP code is:';
   const fullTextMessage = `${baseMessage} *${generatedOtp}*`;
 
-  let cleanPhone = phone.toString().replace(/\D/g, '');
+  let cleanPhone = targetNumber.toString().replace(/\D/g, '');
   if (cleanPhone.length === 10) {
     cleanPhone = '91' + cleanPhone;
   }
   const jid = `${cleanPhone}@s.whatsapp.net`;
 
-  // 3. Auto 3-Times Retry Loop Mechanism
+  // Auto 3-Times Retry Loop Mechanism
   const MAX_RETRIES = 3;
   let attempt = 0;
   let sendSuccess = false;
@@ -207,23 +225,87 @@ app.post('/send-otp', async (req, res) => {
       console.error(`⚠️ Attempt ${attempt} failed: ${err.message}`);
       
       if (attempt < MAX_RETRIES) {
-        await sleep(1500); // Retry wait interval (1.5s)
+        await sleep(1500);
       }
     }
   }
 
-  // 4. Final Response Delivery
   if (sendSuccess) {
-    return res.json({
-      ok: true,
-      otp: generatedOtp
-    });
+    // 5 minutes expiry calculation (Current time + 5 mins in ms)
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+
+    // Firebase Database URL structure: otps/<cleanPhone> -> OTP Code & Expiry
+    if (FBDB_URL) {
+      try {
+        await dbPut(`otps/${cleanPhone}`, {
+          otp: generatedOtp.toString(),
+          expiresAt: expiresAt
+        });
+      } catch (dbErr) {
+        console.error('❌ Firebase DB Save Error:', dbErr.message);
+      }
+    }
+
+    // req_verify true -> response OTP show korbe na
+    if (req_verify === true) {
+      return res.json({ ok: true });
+    } else {
+      return res.json({
+        ok: true,
+        otp: generatedOtp
+      });
+    }
   } else {
     return res.status(500).json({ 
       ok: false, 
       message: 'Failed to send WhatsApp message after 3 retries', 
       error: lastError?.message || 'Unknown network error'
     });
+  }
+});
+
+// ----------------------------------------------------
+// OTP VERIFY API
+// ----------------------------------------------------
+app.post('/verify-otp', async (req, res) => {
+  const { number, phone, otp } = req.body;
+  const targetNumber = number || phone;
+
+  if (!targetNumber || !otp) {
+    return res.status(400).json({ ok: false, message: 'Number and OTP are required' });
+  }
+
+  let cleanPhone = targetNumber.toString().replace(/\D/g, '');
+  if (cleanPhone.length === 10) {
+    cleanPhone = '91' + cleanPhone;
+  }
+
+  try {
+    // Firebase theke data direct fetch (GET)
+    const record = await dbGet(`otps/${cleanPhone}`);
+
+    if (!record) {
+      return res.status(400).json({ verified: false, message: 'OTP not found or expired' });
+    }
+
+    // Expiry check (5 min passed or not)
+    if (Date.now() > record.expiresAt) {
+      await dbDelete(`otps/${cleanPhone}`); // Expired record deleted
+      return res.status(400).json({ verified: false, message: 'OTP has expired' });
+    }
+
+    // Match check
+    if (record.otp.toString() === otp.toString()) {
+      // Correct Match hole DB clean process (DELETE)
+      await dbDelete(`otps/${cleanPhone}`);
+      return res.json({ verified: true });
+    } else {
+      return res.status(400).json({ verified: false, message: 'Invalid OTP' });
+    }
+
+  } catch (err) {
+    console.error('❌ Verify OTP Error:', err.message);
+    return res.status(500).json({ verified: false, error: err.message });
   }
 });
 
