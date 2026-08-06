@@ -12,7 +12,11 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
+
+// Middleware configuration
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 4000;
@@ -180,7 +184,7 @@ app.post('/send-otp', async (req, res) => {
   }
 
   // Support both 'number' and 'phone' keys
-  const { number, phone, digit, message, secret, req_verify } = req.body;
+  const { number, phone, digit, message, secret, req_verify } = req.body || {};
   const targetNumber = number || phone;
 
   if (secret && secret !== API_SECRET) {
@@ -268,7 +272,7 @@ app.post('/send-otp', async (req, res) => {
 // OTP VERIFY API
 // ----------------------------------------------------
 app.post('/verify-otp', async (req, res) => {
-  const { number, phone, otp } = req.body;
+  const { number, phone, otp } = req.body || {};
   const targetNumber = number || phone;
 
   if (!targetNumber || !otp) {
