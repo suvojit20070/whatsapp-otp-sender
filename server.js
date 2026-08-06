@@ -175,7 +175,7 @@ app.get('/health', (req, res) => {
 // ----------------------------------------------------
 app.post('/send-otp', async (req, res) => {
   const { number, phone, digit, message, secret, req_verify, key } = req.body || {};
-  if (key && key !== process.env.API_SECRET) {
+  if (key != process.env.API_SECRET) {
   return res.status(401).json({ ok: false, message: 'Unauthorized API Secret Key' });
   }
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
