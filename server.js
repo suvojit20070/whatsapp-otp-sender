@@ -174,6 +174,10 @@ app.get('/health', (req, res) => {
 // OTP SENDER API WITH FIREBASE STORE & 5-MIN EXPIRY
 // ----------------------------------------------------
 app.post('/send-otp', async (req, res) => {
+  const { number, phone, digit, message, secret, req_verify, key } = req.body || {};
+  if (key && key !== process.env.API_SECRET) {
+  return res.status(401).json({ ok: false, message: 'Unauthorized API Secret Key' });
+  }
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   if (isSpamming(clientIp)) {
     console.warn(`⚠️ Spam attempt blocked from IP: ${clientIp}`);
@@ -184,7 +188,6 @@ app.post('/send-otp', async (req, res) => {
   }
 
   // Support both 'number' and 'phone' keys
-  const { number, phone, digit, message, secret, req_verify } = req.body || {};
   const targetNumber = number || phone;
 
   if (secret && secret !== API_SECRET) {
