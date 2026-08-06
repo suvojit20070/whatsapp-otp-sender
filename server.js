@@ -8,12 +8,12 @@ const {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const axios = require('axios'); // Firebase REST API request handles er jonno
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 4000;
 const API_SECRET = process.env.WA_API_SECRET || 'my_wa_secret_key_123';
